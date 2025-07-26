@@ -18,5 +18,8 @@ To empower students and educators to explore decentralized governance through a 
 - Introduce NFT-based access control to join classroom DAOs.
 
 ## 📡 Contract Address
+ST1WXFZHQZJ7JE41WEKTGZMJ2Z7QKNFD7KS28DRNN.Classroom-DAO-Builder
 > **Deployed on Testnet**  
 > `SPXXX...XXX.classroom-dao` *(Replace with actual address once deployed)*
+><img width="989" height="737" alt="Screenshot 2025-07-26 144437" src="https://github.com/user-attachments/assets/0fcfe0e5-39a5-45d8-be93-87b9fda0ef79" />
+
