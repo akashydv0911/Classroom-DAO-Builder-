@@ -19,4 +19,4 @@ To empower students and educators to explore decentralized governance through a 
 
 ## 📡 Contract Address
 > **Deployed on Testnet**  
-> `SPXXX...XXX.classroom-dao` *(Replace with actual address once deployed)*
+> ST1WXFZHQZJ7JE41WEKTGZMJ2Z7QKNFD7KS28DRNN.project

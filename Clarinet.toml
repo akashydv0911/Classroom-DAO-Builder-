@@ -5,8 +5,8 @@ authors = []
 telemetry = true
 cache_dir = '.\.cache'
 requirements = []
-[contracts.project]
-path = 'contracts/project.clar'
+[contracts.Classroom-DAO-Builder]
+path = 'contracts/Classroom-DAO-Builder.clar'
 clarity_version = 3
 epoch = 3.1
 [repl.analysis]

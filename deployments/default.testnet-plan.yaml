@@ -9,10 +9,10 @@ plan:
     - id: 0
       transactions:
         - contract-publish:
-            contract-name: project
+            contract-name: Classroom-DAO-Builder
             expected-sender: ST1WXFZHQZJ7JE41WEKTGZMJ2Z7QKNFD7KS28DRNN
-            cost: 41860
-            path: "contracts\\project.clar"
+            cost: 41870
+            path: "contracts\\Classroom-DAO-Builder.clar"
             anchor-block-only: true
             clarity-version: 3
       epoch: "3.1"

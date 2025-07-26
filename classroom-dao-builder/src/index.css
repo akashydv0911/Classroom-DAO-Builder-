@@ -1,0 +1,47 @@
+/* Add this to your src/index.css file */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Ensure full viewport usage */
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow-x: hidden;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+}
+
+/* Custom responsive utilities */
+@media (max-width: 640px) {
+  .container-mobile {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+/* Ensure text is readable on all screen sizes */
+@media (max-width: 768px) {
+  .text-responsive {
+    font-size: clamp(1rem, 4vw, 1.5rem);
+  }
+  
+  .heading-responsive {
+    font-size: clamp(1.5rem, 6vw, 3rem);
+  }
+}
+
+/* Fix any potential layout issues */
+.full-width {
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+}
