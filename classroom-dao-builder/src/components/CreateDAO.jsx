@@ -1,89 +1,152 @@
 import React, { useState } from 'react';
+import { userSession } from '../lib/wallet';
+import { openContractCall } from '@stacks/connect';
+import { stringUtf8CV, PostConditionMode } from '@stacks/transactions';
+import { STACKS_TESTNET } from '@stacks/network';
 
-export default function CreateDAO({ createDAO }) {
-  const [name, setName] = useState('');
-  const [symbol, setSymbol] = useState('');
-  const [description, setDescription] = useState('');
-  const [tokenSupply, setTokenSupply] = useState('');
-  const [creating, setCreating] = useState(false);
+function CreateDAO() {
+  const [daoName, setDaoName] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!name || !symbol || !tokenSupply) return;
+    if (!daoName) return alert('Please enter a DAO name');
 
-    setCreating(true);
-    await createDAO({ name, symbol, description, tokenSupply: Number(tokenSupply) });
-    setCreating(false);
+    // Debug wallet connection
+    console.log('User signed in:', userSession.isUserSignedIn());
+    console.log('User data:', userSession.loadUserData());
+
+    if (!userSession.isUserSignedIn()) {
+      alert('Please connect your wallet first');
+      return;
+    }
+
+    // Check if LeatherProvider exists (updated for Leather Wallet)
+    console.log('Window.LeatherProvider exists:', !!window.LeatherProvider);
+    console.log('Window.StacksProvider exists:', !!window.StacksProvider);
+    console.log('Available providers:', window.LeatherProvider || window.StacksProvider);
+
+    const provider = window.LeatherProvider || window.StacksProvider;
+    if (!provider) {
+      alert('No Stacks wallet provider found. Make sure Leather or Hiro Wallet is installed and enabled.');
+      return;
+    }
+
+    const network = STACKS_TESTNET;
+
+    const options = {
+      contractAddress: 'ST1WXFZHQZ7JJE41WEKTGZMJ2Z7QKNFD7KS28DRNN',
+      contractName: 'classroom-dao-builder',
+      functionName: 'create-dao',
+      functionArgs: [stringUtf8CV(daoName)],
+      postConditionMode: PostConditionMode.Deny,
+      network,
+      appDetails: {
+        name: 'Classroom DAO Builder',
+        icon: window.location.origin + '/favicon.ico',
+      },
+      userSession,
+      onFinish: (data) => {
+        console.log('Transaction successful:', data);
+        alert('DAO created successfully!');
+        setDaoName('');
+      },
+      onCancel: () => {
+        console.log('Transaction canceled');
+      },
+    };
+
+    console.log("Calling openContractCall with:", options);
     
-    // Reset form
-    setName('');
-    setSymbol('');
-    setDescription('');
-    setTokenSupply('');
+    // Try direct provider method for Leather Wallet
+    try {
+      console.log('About to call openContractCall...');
+      
+      // First try the standard approach
+      let result = await openContractCall(options);
+      console.log('openContractCall result:', result);
+      
+      // If result is undefined, try direct LeatherProvider approach
+      if (result === undefined && provider && provider.transactionRequest) {
+        console.log('Trying direct LeatherProvider approach...');
+        
+        // Wait a bit for provider to be fully ready
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Leather expects a different format
+        const txOptions = {
+          contractAddress: options.contractAddress,
+          contractName: options.contractName,
+          functionName: options.functionName,
+          functionArgs: options.functionArgs.map(arg => ({
+            type: arg.type,
+            value: arg.value
+          })),
+          network: 'testnet', // Use string instead of object
+          postConditions: [],
+        };
+        
+        console.log('Leather tx options:', txOptions);
+        console.log('Function args detail:', options.functionArgs);
+        console.log('Provider method exists:', typeof provider.transactionRequest);
+        
+        try {
+          console.log('Calling provider.transactionRequest...');
+          result = await provider.transactionRequest(txOptions);
+          console.log('Leather provider result:', result);
+          
+          if (result && result.txId) {
+            console.log('Transaction successful, calling onFinish');
+            options.onFinish(result);
+          } else if (result) {
+            console.log('Transaction completed but no txId:', result);
+            options.onFinish(result);
+          } else {
+            console.log('No result returned from transaction request');
+          }
+        } catch (providerError) {
+          console.error('Leather provider error details:', providerError);
+          console.error('Error message:', providerError.message);
+          console.error('Error code:', providerError.code);
+          
+          // Fallback: Try to trigger wallet manually
+          alert('Wallet error: ' + providerError.message + '\n\nPlease check your Leather wallet for any pending transactions.');
+        }
+      } else if (result === undefined) {
+        console.log('Provider or transactionRequest method not available');
+        console.log('Provider:', provider);
+        console.log('transactionRequest method:', provider?.transactionRequest);
+        
+        // Manual fallback
+        alert('Wallet integration issue. Please:\n1. Make sure Leather wallet is unlocked\n2. Try refreshing the page\n3. Check if there are pending transactions in your wallet');
+      }
+      
+    } catch (error) {
+      console.error('Error in wallet call:', error);
+      console.error('Error stack:', error.stack);
+      console.error('Error name:', error.name);
+      console.error('Error message:', error.message);
+      alert('Wallet error: ' + error.message);
+    }
   };
 
   return (
-    <section className="max-w-2xl mx-auto mt-8 px-4 sm:px-6 lg:px-8">
-      <h3 className="text-2xl font-bold text-gray-800 mb-6">Create a New DAO</h3>
-
-      <form onSubmit={handleSubmit} className="space-y-6 bg-white/80 p-6 rounded-2xl shadow-lg border border-white/20">
-        <div>
-          <label className="block text-sm font-medium text-gray-700">DAO Name</label>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="mt-1 block w-full rounded-lg border border-gray-300 p-3 shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-            placeholder="e.g. LearnTogether DAO"
-            required
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Symbol</label>
-          <input
-            type="text"
-            value={symbol}
-            onChange={(e) => setSymbol(e.target.value.toUpperCase())}
-            className="mt-1 block w-full rounded-lg border border-gray-300 p-3 shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-            placeholder="e.g. LTD"
-            required
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Description</label>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            rows={3}
-            className="mt-1 block w-full rounded-lg border border-gray-300 p-3 shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-            placeholder="What's this DAO about?"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Token Supply</label>
-          <input
-            type="number"
-            value={tokenSupply}
-            onChange={(e) => setTokenSupply(e.target.value)}
-            className="mt-1 block w-full rounded-lg border border-gray-300 p-3 shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-            placeholder="e.g. 1000"
-            required
-          />
-        </div>
-
-        <div>
-          <button
-            type="submit"
-            disabled={creating}
-            className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 rounded-xl font-semibold hover:from-indigo-700 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {creating ? 'Creating DAO...' : 'Create DAO'}
-          </button>
-        </div>
-      </form>
-    </section>
+    <form onSubmit={handleSubmit} className="max-w-xl mx-auto mt-10">
+      <h2 className="text-xl font-bold mb-4">Create New DAO</h2>
+      <input
+        type="text"
+        value={daoName}
+        onChange={(e) => setDaoName(e.target.value)}
+        placeholder="Enter DAO name"
+        className="w-full p-2 border border-gray-300 rounded mb-4"
+      />
+      <button
+        type="submit"
+        className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
+      >
+        Create DAO
+      </button>
+    </form>
   );
 }
+
+export default CreateDAO;
